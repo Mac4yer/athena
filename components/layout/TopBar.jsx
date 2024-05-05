@@ -1,41 +1,52 @@
 'use client'
 
-import React, { useState } from 'react'
-import { Logout, Search } from '@mui/icons-material'
+import React, { useEffect, useState } from 'react'
+import { Logout, Person, Search } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Add } from "@mui/icons-material";
-import { SignOutButton, SignedIn } from '@clerk/nextjs';
-import Link from 'next/link';
-import Image from 'next/image';
+import { SignOutButton, SignedIn, UserButton, useUser } from '@clerk/nextjs';
+import { dark } from '@clerk/themes';
+import Loader from '@components/Loader';
 
 function TopBar() {
 
+    const { user, isLoaded } = useUser()
+
     const router = useRouter()
     const [search, setSearch] = useState('')
+    const [loading, setLoading] = useState(true)
+    const [userData, setUserData] = useState({})
 
-    return (
+    const getUser = async () => {
+      const response = await fetch(`/api/user/${user.id}`);
+      const data = await response.json();
+      setUserData(data);
+      setLoading(false);
+    };
+
+    useEffect(() => {
+        if (user) {
+            getUser()
+        }
+    }, [user])
+
+    return loading || !isLoaded ? <Loader /> : (
         <div className='flex justify-between items-center mt-6'>
             <div className='relative'>
                 <input type="text" className='search-bar' placeholder='Search...' value={search} onChange={(e) => setSearch(e.target.value)} />
-                <Search className='search-icon' onClic={() => { }} />
+                <Search className='search-icon' onClick={() => { router.push(`/search/posts/${search}`) }} />
             </div>
-            <button className='create-post-btn' onclick={() => router.push('/create-post')}>
+            <button className='create-post-btn' onClick={() => router.push('/create-post')}>
                 <Add />
                 <p>Create a Post</p>
             </button>
 
-            <div className='flex gap-3'>
-                <SignedIn>
-                    <SignOutButton>
-                        <div className="flex cursor-pointer gap-4 items-center md:hidden">
-                            <Logout sx={{ color: 'white', fontSize: '32px' }} />
-                        </div>
-                    </SignOutButton>
-                </SignedIn>
-
-                <Link href='/'>
-                    <Image className='rounded-full md:hidden' src='https://github.com/phuc-mai/vibezone/blob/master/public/assets/Andrew.jpg?raw=true' alt='Profile Photo' width={50} height={50} />
+            <div className='flex gap-4 md:hidden'>
+                <Link href={`/profile/${userData._id}/posts`}>
+                    <Person sx={{ fontSize: '35px', color: 'white' }} />
                 </Link>
+                <UserButton appearance={{ baseTheme: dark }}/>
             </div>
         </div>
     )

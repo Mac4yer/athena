@@ -4,13 +4,22 @@ import { useUser } from "@clerk/nextjs"
 import Loader from "@components/Loader"
 import Posting from "@components/form/Posting"
 import { useEffect, useState } from "react"
+import { useRouter } from 'next/navigation'
 
 const CreatePost = () => {
+
   const { user, isLoaded } = useUser();
 
-  const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
+  const [loading, setLoading] = useState(true)
   const [userData, setUserData] = useState({})
+
+  if (user) {
+    router.push('/create-post')
+  } else {
+    router.push('/sign-in')
+  }
 
   const getUser = async () => {
     const response = await fetch(`/api/user/${user.id}`)

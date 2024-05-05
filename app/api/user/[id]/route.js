@@ -1,5 +1,6 @@
+import Post from "@lib/models/Post";
 import User from "@lib/models/User";
-import { connectToDB } from "@lib/mongodb/mongoose"
+import { connectToDB } from "@lib/mongodb/mongoose";
 
 export const GET = async (req, { params }) => {
 
@@ -7,15 +8,26 @@ export const GET = async (req, { params }) => {
 
         await connectToDB();
 
-        const user = await User.findOne({ clerkId: params.id }).populate('followers following').exec();
+        const user = await User.findOne({ clerkId: params.id }).populate({
+            path: "posts savedPosts likedPosts",
+            model: Post,
+            populate: {
+                path: "creator",
+                model: User,
+            },
+        }).populate({
+            path: "followers following",
+            model: User,
+            populate: {
+                path: "posts savedPosts likedPosts",
+                model: Post,
+            },
+        }).exec();
 
         return new Response(JSON.stringify(user), { status: 200 });
-        
-    } catch (error) {
 
-        console.log(error);
-        return new Response('Fail to get user', { status: 500 });
-        
+    } catch (err) {
+        console.error(err);
+        return new Response("Failed to get user", { status: 500 });
     }
-
-}
+};
